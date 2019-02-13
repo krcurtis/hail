@@ -155,7 +155,10 @@ case class FirthStats(b: DenseVector[Double], chi2: Double, p: Double) extends L
 object ScoreTest extends LogisticRegressionTest {
   val schema: Type = TStruct(
     ("chi_sq_stat", TFloat64()),
-    ("p_value", TFloat64()))
+    ("p_value", TFloat64()),
+    ("u", TFloat64()),
+    ("v", TFloat64())
+  )
 
   val emptyStats: Seq[Annotation] = new Array[Annotation](schema.children.size)
 
@@ -190,8 +193,11 @@ object ScoreTest extends LogisticRegressionTest {
 
         val chi2 = score dot (fisher \ score)
         val p = chiSquaredTail(chi2, m - m0)
+        val u = score(-1)
+        val Finv = inv(fisher)
+        val v = Finv(-1,-1)
 
-        Some(ScoreStats(chi2, p))
+        Some(ScoreStats(chi2, p, u, v))
       } catch {
         case e: breeze.linalg.MatrixSingularException => None
         case e: breeze.linalg.NotConvergedException => None
@@ -203,8 +209,8 @@ object ScoreTest extends LogisticRegressionTest {
 }
 
 
-case class ScoreStats(chi2: Double, p: Double) extends LogisticRegressionStats {
-  def toAnnotations: Seq[Annotation] = FastSeq(chi2, p)
+case class ScoreStats(chi2: Double, p: Double, u: Double, v: Double) extends LogisticRegressionStats {
+  def toAnnotations: Seq[Annotation] = FastSeq(chi2, p, u, v)
 }
 
 
